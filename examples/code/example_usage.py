@@ -50,7 +50,7 @@ async def streaming_example():
 
     async for page_result in document.extract_streaming(
         extraction_config=docviz.ExtractionConfig(page_limit=10),
-        includes=[docviz.ExtractionType.TEXT],
+        includes=docviz.types.IncludesPreset.TEXT_DATA,
     ):
         page_result.save(
             document.name + f"_page{page_result.page_number}",

@@ -10,6 +10,7 @@ from docviz.constants import (
     DEFAULT_CONFIDENCE_THRESHOLD,
     DEFAULT_DEVICE,
     DEFAULT_IMAGE_SIZE,
+    DEFAULT_LABELS_TO_EXCLUDE_OCR,
     DEFAULT_LLM_API_KEY,
     DEFAULT_LLM_BASE_URL,
     DEFAULT_LLM_MODEL,
@@ -22,8 +23,8 @@ from docviz.constants import (
     get_models_path,
 )
 from docviz.lib.detection.backends import DetectionBackendEnum
-from docviz.lib.detection.labels import CanonicalLabel
 from docviz.types import DetectionConfig, ExtractionConfig, LLMConfig, OCRConfig
+from docviz.types.labels import CanonicalLabel
 
 
 @lru_cache(maxsize=4)
@@ -105,12 +106,7 @@ def get_default_ocr_config(
     return OCRConfig(
         lang=lang,
         chart_labels=chart_labels,
-        labels_to_exclude=[
-            CanonicalLabel.OTHER.value,
-            CanonicalLabel.PAGE_FOOTER.value,
-            CanonicalLabel.PAGE_HEADER.value,
-            CanonicalLabel.FOOTNOTE.value,
-        ],
+        labels_to_exclude=DEFAULT_LABELS_TO_EXCLUDE_OCR,
     )
 
 

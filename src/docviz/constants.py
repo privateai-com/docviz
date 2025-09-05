@@ -13,7 +13,6 @@ def get_docviz_directory() -> Path:
 
 
 # Performance and Processing Constants
-CONVERSION_MAX_WORKERS = 10
 DEFAULT_CHUNK_SIZE = 8192
 DOWNLOAD_TIMEOUT_SECONDS = 30
 
@@ -31,6 +30,16 @@ DEFAULT_PREFER_PDF_TEXT = False
 
 # Default OCR Configuration Constants
 DEFAULT_OCR_LANGUAGE = "eng"
+DEFAULT_LABELS_TO_EXCLUDE_OCR = [
+    # CanonicalLabel.OTHER.value,
+    # CanonicalLabel.PAGE_FOOTER.value,
+    # CanonicalLabel.PAGE_HEADER.value,
+    # CanonicalLabel.FOOTNOTE.value,
+    "other",
+    "page_footer",
+    "page_header",
+    "footnote",
+]
 
 # Default LLM Configuration Constants
 DEFAULT_LLM_MODEL = "gemma3"

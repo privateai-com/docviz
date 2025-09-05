@@ -1,3 +1,4 @@
+import gc
 import json
 import tempfile
 from collections.abc import Callable, Iterator
@@ -47,15 +48,21 @@ def pipeline(
     llm_config: LLMConfig,
     includes: list[ExtractionType],
     progress_callback: Callable[[int], None] | None = None,
+    memory_cleanup_interval: int = 10,
 ) -> list[dict[str, Any]]:
     """
     Full pipeline: convert PDF to PNG, detect charts, extract text, and summarize.
 
     Args:
-        document_path (str): Path to the input PDF document.
-        model_path (str): Path to the YOLO model file.
-        output_dir (str): Directory to save outputs.
-        settings_file (Path): Path to the settings file.
+        document_path: Path to the input PDF document.
+        output_dir: Directory to save outputs.
+        detection_config: Configuration for detection.
+        extraction_config: Configuration for extraction.
+        ocr_config: Configuration for OCR.
+        llm_config: Configuration for LLM.
+        includes: List of extraction types to include.
+        progress_callback: Optional callback for progress tracking.
+        memory_cleanup_interval: Interval for explicit garbage collection (pages).
 
     Returns:
         List[Dict[str, Any]]: List of dicts for each page, each containing a list of elements (charts and text).
@@ -105,17 +112,11 @@ def pipeline(
         )
         logger.info("Models initialized successfully")
 
-        # Process each page
+        # Process each page with lazy loading
         results: list[dict[str, Any]] = []
         for idx, img_path in enumerate(image_paths):
-            img = cv2.imread(str(img_path), cv2.IMREAD_COLOR)
-
             if progress_callback is not None:
                 progress_callback(idx + 1)
-
-            if img is None:
-                logger.error(f"Could not load image at {img_path}")
-                raise FileNotFoundError(f"Could not load image at {img_path}")
 
             if extraction_config.page_limit is not None and idx >= extraction_config.page_limit:
                 logger.info(
@@ -125,10 +126,15 @@ def pipeline(
 
             logger.info(f"Processing page {idx + 1}/{len(image_paths)}")
 
+            img = cv2.imread(str(img_path), cv2.IMREAD_COLOR)
+            if img is None:
+                logger.error(f"Could not load image {img_path}")
+                raise FileNotFoundError(f"Could not load image {img_path}")
+
             # Run layout detection once so we can both (a) exclude regions in PDF text and (b) reuse in processing
             detections = detector.parse_layout(img)
 
-            # Remove unneeded datections based of includes
+            # Remove unneeded detections based of includes
             detections = filter_detections(
                 detections,
                 labels_to_include=[inc.to_canonical_label() for inc in includes],
@@ -193,6 +199,13 @@ def pipeline(
             with open(Path(output_dir) / f"page_{idx + 1}.json", "w") as f:
                 json.dump(page_result, f)
 
+            # Explicitly free memory after processing each page
+            del img
+
+            # Force garbage collection at specified intervals to prevent memory buildup
+            if (idx + 1) % memory_cleanup_interval == 0:
+                gc.collect()
+
     logger.info("Pipeline completed successfully")
     logger.info(
         f"Processed {len(results)} pages with total elements: {sum(len(page['elements']) for page in results)}"
@@ -226,7 +239,7 @@ def process_single_page(
     """
 
     detections = precomputed_detections or detector.parse_layout(image)
-    chart_detections = filter_detections(detections, charts_labels)
+    chart_detections = filter_detections(detections, labels_to_include=charts_labels)
 
     chart_elements = process_chart_elements(
         image=image,
@@ -235,7 +248,9 @@ def process_single_page(
         summarizer=summarizer,
     )
 
-    filtered_detections = filter_detections(detections, labels_to_exclude_from_ocr)
+    filtered_detections = filter_detections(
+        detections, labels_to_include=labels_to_exclude_from_ocr
+    )
     excluded_regions = [detection.bbox for detection in filtered_detections]
     text_elements = process_text_elements(
         image=image,
@@ -393,6 +408,7 @@ def pipeline_streaming(
     llm_config: LLMConfig,
     includes: list[ExtractionType],
     progress_callback: Callable[[int], None] | None = None,
+    memory_cleanup_interval: int = 10,
 ) -> Iterator[dict[str, Any]]:
     """
     Streaming version of pipeline: yields page results one by one as they are processed.
@@ -406,6 +422,7 @@ def pipeline_streaming(
         llm_config: Configuration for LLM
         includes: List of extraction types to include
         progress_callback: Optional callback for progress tracking
+        memory_cleanup_interval: Interval for explicit garbage collection (pages)
 
     Yields:
         dict[str, Any]: Page result dict for each processed page
@@ -455,16 +472,10 @@ def pipeline_streaming(
         )
         logger.info("Models initialized successfully")
 
-        # Process each page and yield results one by one
+        # Process each page and yield results one by one with lazy loading
         for idx, img_path in enumerate(image_paths):
-            img = cv2.imread(str(img_path), cv2.IMREAD_COLOR)
-
             if progress_callback is not None:
                 progress_callback(idx + 1)
-
-            if img is None:
-                logger.error(f"Could not load image at {img_path}")
-                raise FileNotFoundError(f"Could not load image at {img_path}")
 
             if extraction_config.page_limit is not None and idx >= extraction_config.page_limit:
                 logger.info(
@@ -473,6 +484,11 @@ def pipeline_streaming(
                 break
 
             logger.info(f"Processing page {idx + 1}/{len(image_paths)}")
+
+            img = cv2.imread(str(img_path), cv2.IMREAD_COLOR)
+            if img is None:
+                logger.error(f"Could not load image {img_path}")
+                raise FileNotFoundError(f"Could not load image {img_path}")
 
             # Run layout detection once so we can both (a) exclude regions in PDF text and (b) reuse in processing
             detections = detector.parse_layout(img)
@@ -486,6 +502,7 @@ def pipeline_streaming(
             analysis = page_analyses[idx]
             prefer_pdf_text = extraction_config.prefer_pdf_text
             fast_text: str | None = None
+
             if (
                 analysis is not None
                 and prefer_pdf_text
@@ -494,7 +511,7 @@ def pipeline_streaming(
             ):
                 # Merge exclusion regions: image regions from analysis + labels_to_exclude regions from detections
                 excluded_label_detections = filter_detections(
-                    detections, extraction_config.labels_to_exclude
+                    detections, labels_to_include=extraction_config.labels_to_exclude
                 )
                 excluded_bboxes = [
                     (
@@ -544,5 +561,12 @@ def pipeline_streaming(
 
             # Yield the page result
             yield page_result
+
+            # Explicitly free memory after processing each page
+            del img
+
+            # Force garbage collection at specified intervals to prevent memory buildup
+            if (idx + 1) % memory_cleanup_interval == 0:
+                gc.collect()
 
     logger.info("Streaming pipeline completed successfully")

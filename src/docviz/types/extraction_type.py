@@ -1,6 +1,6 @@
 import enum
 
-from docviz.lib.detection.labels import CanonicalLabel
+from docviz.types.labels import CanonicalLabel
 
 
 class ExtractionType(enum.Enum):

@@ -2,10 +2,10 @@ import numpy as np
 
 from docviz.lib.detection.backends.base import BaseDetectionBackend
 from docviz.lib.detection.deduplication import remove_duplicates_nms
-from docviz.lib.detection.labels import CanonicalLabel
 from docviz.logging import get_logger
 from docviz.model_cache import load_ultralytics_model
 from docviz.types import DetectionConfig, DetectionResult
+from docviz.types.labels import CanonicalLabel
 
 logger = get_logger(__name__)
 
