@@ -77,17 +77,18 @@ def find_tesseract_executable() -> Path | None:
     Returns:
         Path to tesseract executable if found, None otherwise.
     """
-    # Common installation paths
-    possible_paths = [TESSERACT_DEFAULT_WIN_PATH, *TESSERACT_ADDITIONAL_WIN_PATHS]
-
     # Check if tesseract is in PATH using shutil.which
     import shutil
 
     tesseract_path = shutil.which("tesseract")
     if tesseract_path:
-        return Path(tesseract_path)
+        p = Path(tesseract_path)
+        if p.exists():
+            return p
 
     # Check common installation paths
+    possible_paths = [TESSERACT_DEFAULT_WIN_PATH, *TESSERACT_ADDITIONAL_WIN_PATHS]
+
     for path in possible_paths:
         p = Path(path)
         if p.exists():
@@ -96,14 +97,12 @@ def find_tesseract_executable() -> Path | None:
     return None
 
 
-async def install_tesseract(docviz_dir: Path) -> None:
-    """Download and install Tesseract OCR.
+async def install_tesseract_windows(docviz_dir: Path) -> None:
+    """Download and install Tesseract OCR Installer for Windows platform.
 
     Args:
         docviz_dir: Directory to store the installer.
     """
-    logger.info("Tesseract not found. Starting installation process...")
-
     setup_path = docviz_dir / TESSERACT_WIN_SETUP_FILENAME
 
     try:
@@ -117,7 +116,8 @@ async def install_tesseract(docviz_dir: Path) -> None:
         )
 
         # Launch installer
-        subprocess.Popen(["cmd", "/c", "start", setup_path.as_posix()], shell=True)
+        command = ["cmd", "/c", "start", setup_path.as_posix()]
+        subprocess.Popen(command, shell=True)
 
         # Wait a bit for installer to start
         await asyncio.sleep(2)
@@ -134,7 +134,43 @@ async def install_tesseract(docviz_dir: Path) -> None:
         logger.error(f"Failed to install Tesseract: {e}")
         if setup_path.exists():
             setup_path.unlink()
-        raise
+
+
+async def install_tesseract_linux(docviz_dir: Path) -> None:
+    """Download and install Tesseract OCR for Linux platform.
+
+    Args:
+        docviz_dir: Directory to store the installer.
+    """
+
+    try:
+        logger.info("Installing Tesseract OCR for Linux platform...")
+        command = ["sudo", "apt-get", "install", "tesseract-ocr"]
+        subprocess.run(command, check=True)
+        logger.info("Tesseract OCR installed successfully")
+    except Exception as e:
+        logger.error(f"Failed to install Tesseract OCR: {e}")
+        raise RuntimeError(
+            "Failed to install Tesseract OCR! Please install it manually using 'sudo apt-get install tesseract-ocr'"
+        ) from e
+
+
+async def install_tesseract(docviz_dir: Path) -> None:
+    """Download and install Tesseract OCR.
+
+    Args:
+        docviz_dir: Directory to store the installer.
+    """
+    logger.info("Tesseract not found. Starting installation process...")
+
+    if sys.platform == "win32":
+        await install_tesseract_windows(docviz_dir)
+    elif sys.platform == "linux":
+        await install_tesseract_linux(docviz_dir)
+    else:
+        raise RuntimeError(
+            f"Unsupported platform: {sys.platform}. You need to install Tesseract OCR manually."
+        )
 
 
 def test_tesseract_installation() -> None:
@@ -150,10 +186,6 @@ def test_tesseract_installation() -> None:
         tesseract_path = find_tesseract_executable()
         if not tesseract_path:
             raise RuntimeError("Tesseract executable not found")
-
-        # Set the path
-        print(tesseract_path.as_posix())  # TODO: debug adequate way to set tesseract_cmd
-        # pytesseract.pytesseract.tesseract_cmd = tesseract_path.as_posix()
 
         # Test with a simple image if available
         test_image_path = (

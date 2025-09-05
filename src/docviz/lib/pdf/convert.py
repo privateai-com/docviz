@@ -43,7 +43,7 @@ def _render_page_to_png(
     return img_path
 
 
-def pdf_to_png(
+def pdf_to_pngs(  # TODO: optimize this process to work ok even on VDS
     pdf_path: str,
     output_dir: str,
     zoom_x: float = 5,

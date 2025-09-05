@@ -1,4 +1,4 @@
-from .convert import extract_pages, pdf_to_png
+from .convert import extract_pages, pdf_to_pngs
 from .pdf_analyzer import (
     analyze_pdf,
     extract_pdf_page_text,
@@ -12,5 +12,5 @@ __all__ = [
     "extract_pdf_page_text",
     "extract_pdf_text_excluding_regions",
     "extract_text_from_image",
-    "pdf_to_png",
+    "pdf_to_pngs",
 ]

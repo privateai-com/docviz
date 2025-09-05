@@ -16,7 +16,7 @@ from docviz.lib.pdf import (
     # extract_pdf_page_text,
     # extract_pdf_text_excluding_regions,
     extract_text_from_image,
-    pdf_to_png,
+    pdf_to_pngs,
 )
 from docviz.lib.pdf.pdf_analyzer import (
     analyze_pdf,
@@ -73,7 +73,7 @@ def pipeline(
         logger.debug(f"Created temporary directory: {temp_path}")
 
         logger.info("Converting PDF to PNG images")
-        image_paths = pdf_to_png(
+        image_paths = pdf_to_pngs(
             pdf_path=str(document_path),
             output_dir=str(temp_path),
             zoom_x=extraction_config.zoom_x,
@@ -423,7 +423,7 @@ def pipeline_streaming(
         logger.debug(f"Created temporary directory: {temp_path}")
 
         logger.info("Converting PDF to PNG images")
-        image_paths = pdf_to_png(
+        image_paths = pdf_to_pngs(
             pdf_path=str(document_path),
             output_dir=str(temp_path),
             zoom_x=extraction_config.zoom_x,
