@@ -175,9 +175,9 @@ Project has a static site with docs and examples on almost all of its functional
 
 ### Examples
 
-- [Basic Usage](https://github.com/privateai-com/docviz/blob/main/src/examples/basic_usage.py) with 3 different approaches: simple, passing url to document, streaming example and custom configuration using OpenAI key.
-- [Streaming Processing](https://github.com/privateai-com/docviz/blob/main/src/examples/streaming_processing.py) with progress tracking and generator API.
-- [OpenAI API Example](https://github.com/privateai-com/docviz/blob/main/src/examples/openai_api.py) with custom configuration using OpenAI key.
+- [Basic Usage](https://github.com/privateai-com/docviz/blob/main/examples/code/basic_usage.py) with 3 different approaches: simple, passing url to document, streaming example and custom configuration using OpenAI key.
+- [Streaming Processing](https://github.com/privateai-com/docviz/blob/main/examples/code/streaming_processing.py) with progress tracking and generator API.
+- [OpenAI API Example](https://github.com/privateai-com/docviz/blob/main/examples/code/openai_api.py) with custom configuration using OpenAI key.
 
 ### Pipeline Visualization
 
