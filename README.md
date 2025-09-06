@@ -171,11 +171,31 @@ extractions.save("progress_results", save_format=docviz.SaveFormat.JSON)
 
 ## Docs
 
-TODO: create docs static site
+Project has a static site with docs and examples on almost all of its functionality. You can find it at [GitHub Pages](https://docviz-python.readthedocs.io/) or build it on your own using `sphinx` locally. All the dependencies are included in [pyproject.toml](./pyproject.toml) under the `docs` group.
 
 ### Examples
 
-- [Basic Usage](https://github.com/privateai-com/docviz/blob/main/src/example_usage.py) with 3 different approaches: simple, passing url to document, streaming example and custom configuration using OpenAI key.
+- [Basic Usage](https://github.com/privateai-com/docviz/blob/main/src/examples/basic_usage.py) with 3 different approaches: simple, passing url to document, streaming example and custom configuration using OpenAI key.
+- [Streaming Processing](https://github.com/privateai-com/docviz/blob/main/src/examples/streaming_processing.py) with progress tracking and generator API.
+- [OpenAI API Example](https://github.com/privateai-com/docviz/blob/main/src/examples/openai_api.py) with custom configuration using OpenAI key.
+
+### Pipeline Visualization
+
+<div align="center">
+  <div style="display: inline-block; width: 60%; margin-bottom: 1.5em;">
+    <img src="assets/chart.png" alt="Original Chart" width="100%">
+    <div><em>Original page with chart</em></div>
+  </div>
+  <div style="display: inline-block; width: 60%;">
+    <img src="assets/chart_extracted.png" alt="Extracted Chart" width="100%">
+    <div><em>Chart region extracted by Page Parser</em></div>
+  </div>
+  <div style="display: inline-block; width: 60%;">
+    <img src="assets/image.png" alt="Extracted Chart" width="100%">
+    <div><em>Gemma3 output</em></div>
+  </div>
+</div>
+
 
 ## 📝 Contributing
 

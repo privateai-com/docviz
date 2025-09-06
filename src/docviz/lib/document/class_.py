@@ -99,6 +99,24 @@ class Document:
         config: ExtractionConfig | None = None,
         filename: str | None = None,
     ):
+        """Initialize a Document instance.
+
+        The Document class is the primary interface for working with documents in DocViz.
+        It provides methods for extracting various types of content (text, tables, figures,
+        equations) from PDF documents and other supported formats.
+
+        The class handles document loading, validation, and provides both synchronous and
+        asynchronous extraction methods. It supports streaming extraction for memory-efficient
+        processing of large documents and chunked extraction for batch processing scenarios.
+
+        Args:
+            file_path: Path to the document file.
+            config: Configuration for extraction. If None, uses default extraction
+                settings.
+            filename: Optional filename for the document. If None, the filename
+                will be extracted from the file path or a default name will be used.
+        """
+
         self.file_path = resolve_path_or_url(file_path, filename)
         self.config = config or ExtractionConfig()
         self._page_count = None
