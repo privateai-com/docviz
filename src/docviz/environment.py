@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -243,8 +244,13 @@ async def check_dependencies() -> None:
 
     This function:
     1. Checks if Tesseract OCR is installed and working
-    2. Downloads and installs Tesseract if needed
-    3. Ensures all required models are downloaded
+    2. Downloads and tries to install Tesseract if needed
+    3. Ensures all required detection models are downloaded
+
+    Raises:
+        RuntimeError: If Tesseract is not working properly or if any required model is missing.
+        KeyboardInterrupt: If the user cancels the installation process.
+        Exception: If any other error occurs during the dependency check.
     """
     logger.info("Checking dependencies...")
 
@@ -272,3 +278,32 @@ async def check_dependencies() -> None:
     except Exception as e:
         logger.error(f"Failed to check dependencies: {e}")
         raise
+
+
+def reset_docviz_cache(graceful: bool = False) -> None:
+    """Reset the docviz cache.
+
+    This function should be called when the user wants to delete all
+    cached configurations, models, and information about the dependencies.
+
+    Args:
+        graceful: If True, the function will try to reset the cache gracefully, trying to remove each file one by one.
+            If False, the function will raise an exception if the directory is used by another process.
+
+    Raises:
+        Exception: If any error occurs during the reset process. For example,
+            if directory is used by another process.
+    """
+    logger.info("Resetting docviz cache...")
+    try:
+        docviz_dir = get_docviz_directory()
+        if graceful:
+            for file in docviz_dir.glob("*"):
+                file.unlink()
+            docviz_dir.rmdir()
+        else:
+            shutil.rmtree(docviz_dir)
+    except Exception as e:
+        logger.error(f"Failed to reset docviz cache: {e}")
+        raise
+    logger.info("Docviz cache reset successfully")
