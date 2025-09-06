@@ -38,8 +38,12 @@ def _check_dependencies_once():
     A global variable tracks whether dependencies have been checked in the current thread.
     For process-level safety, a lock file at ~/.docviz/dependencies_checked.lock prevents
     multiple processes from performing the check simultaneously. Double-checked locking
-    is used to minimize unnecessary locking and improve performance. If no asyncio event
-    loop is available, one is created before running the dependency check.
+    is used to minimize unnecessary locking and improve performance.
+
+    The function handles different asyncio contexts:
+    - Creates a new event loop if none exists
+    - Uses asyncio.run() for clean execution
+    - Handles cases where event loop is already running (e.g., Jupyter notebooks)
 
     Raises:
         Exception: If any required dependency is missing or the dependency check fails.
@@ -62,12 +66,8 @@ def _check_dependencies_once():
             return
 
         try:
-            if asyncio.get_event_loop() is None:
-                asyncio.set_event_loop(asyncio.new_event_loop())
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(check_dependencies())
+            _run_async_dependency_check()
 
-            # Mark as checked
             __DEPENDENCIES_CHECKED = True
             lock_file.touch()
 
@@ -75,6 +75,46 @@ def _check_dependencies_once():
             # If dependencies check fails, don't mark as checked
             # so it will retry next time
             raise e
+
+
+def _run_async_dependency_check():
+    """
+    Run the async dependency check with proper event loop handling.
+
+    This helper function handles different asyncio contexts gracefully:
+    1. If no event loop is running, use asyncio.run() (preferred modern approach)
+    2. If an event loop is already running (e.g., in Jupyter), create a new thread
+    3. Handle various edge cases and provide clear error messages
+
+    Raises:
+        RuntimeError: If dependency check fails after multiple attempts
+        Exception: Original exception from check_dependencies() if it's not event loop related
+    """
+    try:
+        asyncio.run(check_dependencies())
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+
+        # Handle "asyncio.run() cannot be called from a running event loop"
+        if "cannot be called from a running event loop" in error_msg:
+            # We're in an environment with a running event loop (e.g., Jupyter)
+            # Run in a separate thread to avoid conflicts
+            import concurrent.futures
+
+            def run_in_thread():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    return loop.run_until_complete(check_dependencies())
+                finally:
+                    loop.close()
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                future.result()
+        else:
+            # Re-raise other RuntimeErrors
+            raise
 
 
 # Check dependencies on import
