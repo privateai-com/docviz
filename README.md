@@ -197,9 +197,9 @@ Project has a static site with docs and examples on almost all of its functional
 </div>
 
 
-## 📝 Contributing
+## Contributing
 
-TODO: WIP
+Refer to [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ## 📄 License
 
