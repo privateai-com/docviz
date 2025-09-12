@@ -8,6 +8,12 @@ from typing import Any, cast
 import cv2
 import numpy as np
 
+from docviz.constants import (
+    DEFAULT_CHART_SUMMARIZER_RETRIES,
+    DEFAULT_CHART_SUMMARIZER_TIMEOUT,
+    DEFAULT_MEMORY_CLEANUP_INTERVAL,
+    TMP_DIR_PREFIX,
+)
 from docviz.lib.detection import Detector
 from docviz.lib.extraction.utils import filter_detections
 from docviz.lib.image import ChartSummarizer, extract_regions, fill_regions_with_color
@@ -137,7 +143,7 @@ def pipeline(
             # Remove unneeded detections based of includes
             detections = filter_detections(
                 detections,
-                labels_to_include=[inc.to_canonical_label() for inc in includes],
+                include=[inc.to_canonical_label() for inc in includes],
             )
 
             analysis = page_analyses[idx]
@@ -151,7 +157,8 @@ def pipeline(
             ):
                 # Merge exclusion regions: image regions from analysis + labels_to_exclude regions from detections
                 excluded_label_detections = filter_detections(
-                    detections, extraction_config.labels_to_exclude
+                    detections, # type: ignore
+                    extraction_config.labels_to_exclude,  
                 )
                 excluded_bboxes = [
                     (
@@ -160,7 +167,7 @@ def pipeline(
                         float(b[2]),
                         float(b[3]),
                     )
-                    for b in (detection.bbox for detection in excluded_label_detections)
+                    for b in (detection.bbox for detection in excluded_label_detections)  # type: ignore
                 ]
                 combined_excludes = list(analysis.image_rects) + excluded_bboxes
 
@@ -185,14 +192,14 @@ def pipeline(
 
             page_result = process_single_page(
                 image=img,
+                includes=includes,
                 page_number=idx + 1,
-                detector=detector,
+                detections=detections,  # type: ignore
                 summarizer=summarizer,
                 ocr_lang=ocr_config.lang,
                 charts_labels=ocr_config.chart_labels,
-                labels_to_exclude_from_ocr=ocr_config.labels_to_exclude,
+                ocr_noise_labels=ocr_config.labels_to_exclude,
                 pre_extracted_text=fast_text,
-                precomputed_detections=detections,
             )
             results.append(page_result)
 
@@ -215,14 +222,14 @@ def pipeline(
 
 def process_single_page(
     image: np.ndarray,
+    includes: list[ExtractionType],
     page_number: int,
-    detector: Detector,
+    detections: list[DetectionResult],
     summarizer: ChartSummarizer,
     charts_labels: list[str],
-    labels_to_exclude_from_ocr: list[str],
+    ocr_noise_labels: list[str],
     ocr_lang: str,
     pre_extracted_text: str | None = None,
-    precomputed_detections: list[DetectionResult] | None = None,
 ) -> dict[str, Any]:
     """
     Process a single page image: detect elements, extract chart and text data.
@@ -237,34 +244,38 @@ def process_single_page(
     Returns:
         Dict[str, Any]: Dictionary containing page number and extracted elements.
     """
+    chart_elements = []
+    text_elements = []
 
-    detections = precomputed_detections or detector.parse_layout(image)
-    chart_detections = filter_detections(detections, labels_to_include=charts_labels)
+    if ExtractionType.FIGURE in includes:
+        # Filter detections to only include chart elements
+        # to extract regions with them from the image
+        chart_detections = filter_detections(detections, include=charts_labels)
+        chart_elements = process_chart_elements(
+            image=image,
+            chart_detections=chart_detections,  # type: ignore
+            page_number=page_number,
+            summarizer=summarizer,
+        )
 
-    chart_elements = process_chart_elements(
-        image=image,
-        chart_detections=chart_detections,
-        page_number=page_number,
-        summarizer=summarizer,
-    )
+    if ExtractionType.TEXT in includes:
+        # Get detections that are not allowed to be included in
+        # raw extracted text (e.g., tables, figures, ?footnotes?, etc.)
+        excluded_regions = filter_detections(
+            detections, include=ocr_noise_labels, return_bboxes=True
+        )
 
-    filtered_detections = filter_detections(
-        detections, labels_to_include=labels_to_exclude_from_ocr
-    )
-    excluded_regions = [detection.bbox for detection in filtered_detections]
-    text_elements = process_text_elements(
-        image=image,
-        excluded_bboxes=excluded_regions,  # type: ignore
-        ocr_lang=ocr_lang,
-        page_number=page_number,
-        pre_extracted_text=pre_extracted_text,
-    )
-
-    elements = chart_elements + text_elements
-
+        text_elements = process_text_elements(
+            image=image,
+            excluded_bboxes=excluded_regions,  # type: ignore
+            ocr_lang=ocr_lang,
+            page_number=page_number,
+            pre_extracted_text=None,
+        )
+    print(chart_elements, text_elements, sep="\n\n")
     return {
         "page_number": page_number,
-        "elements": elements,
+        "elements": chart_elements + text_elements,
     }
 
 
@@ -373,7 +384,6 @@ def process_text_elements(
         regions=excluded_bboxes,
         color=(255, 255, 255),
     )
-
     # Extract text from the entire processed image
     logger.debug("Extracting text from processed image via OCR")
     text = extract_text_from_image(
@@ -408,7 +418,7 @@ def pipeline_streaming(
     llm_config: LLMConfig,
     includes: list[ExtractionType],
     progress_callback: Callable[[int], None] | None = None,
-    memory_cleanup_interval: int = 10,
+    memory_cleanup_interval: int = DEFAULT_MEMORY_CLEANUP_INTERVAL,
 ) -> Iterator[dict[str, Any]]:
     """
     Streaming version of pipeline: yields page results one by one as they are processed.
@@ -435,7 +445,7 @@ def pipeline_streaming(
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory(prefix=TMP_DIR_PREFIX) as temp_dir:
         temp_path = Path(temp_dir)
         logger.debug(f"Created temporary directory: {temp_path}")
 
@@ -448,15 +458,16 @@ def pipeline_streaming(
         )
         logger.info(f"Converted PDF to {len(image_paths)} PNG images")
 
-        logger.info("Analyzing PDF pages for native text and images")
-        try:
-            page_analyses = analyze_pdf(document_path)
-            logger.info("PDF analysis completed successfully")
-        except Exception as exc:
-            logger.warning(
-                f"PDF analysis failed with error: {exc}. Falling back to OCR-only text extraction."
-            )
-            page_analyses = [None] * len(image_paths)
+        # TODO: uncomment this once we will fr handle native PDF analysis
+        # logger.info("Analyzing PDF pages for native text and images")
+        # try:
+        #     page_analyses = analyze_pdf(document_path)
+        #     logger.info("PDF analysis completed successfully")
+        # except Exception as exc:
+        #     logger.warning(
+        #         f"PDF analysis failed with error: {exc}. Falling back to OCR-only text extraction."
+        #     )
+        #     page_analyses = [None] * len(image_paths)
 
         # Initialize models
         logger.info("Initializing detection and summarization models")
@@ -467,12 +478,11 @@ def pipeline_streaming(
             model_name=model_name,
             base_url=base_url,
             api_key=api_key or "",
-            retries=3,
-            timeout=5,
+            retries=DEFAULT_CHART_SUMMARIZER_RETRIES,
+            timeout=DEFAULT_CHART_SUMMARIZER_TIMEOUT,
         )
         logger.info("Models initialized successfully")
 
-        # Process each page and yield results one by one with lazy loading
         for idx, img_path in enumerate(image_paths):
             if progress_callback is not None:
                 progress_callback(idx + 1)
@@ -490,82 +500,73 @@ def pipeline_streaming(
                 logger.error(f"Could not load image {img_path}")
                 raise FileNotFoundError(f"Could not load image {img_path}")
 
-            # Run layout detection once so we can both (a) exclude regions in PDF text and (b) reuse in processing
             detections = detector.parse_layout(img)
 
-            # Remove unneeded detections based on includes
-            detections = filter_detections(
-                detections,
-                labels_to_include=[inc.to_canonical_label() for inc in includes],
-            )
+            # TODO: uncomment this code block once we will fr handle native PDF analysis
+            # analysis = page_analyses[idx]
+            # prefer_pdf_text = extraction_config.prefer_pdf_text
+            # fast_text: str | None = None
 
-            analysis = page_analyses[idx]
-            prefer_pdf_text = extraction_config.prefer_pdf_text
-            fast_text: str | None = None
+            # if (
+            #     analysis is not None
+            #     and prefer_pdf_text
+            #     and analysis.has_text
+            #     and not analysis.is_full_page_image
+            # ):
+            #     # Merge exclusion regions: image regions from analysis + labels_to_exclude regions from detections
+            #     excluded_label_detections = filter_detections(
+            #         detections, labels_to_include=extraction_config.labels_to_exclude
+            #     )
+            #     excluded_bboxes = [
+            #         (
+            #             float(b[0]),
+            #             float(b[1]),
+            #             float(b[2]),
+            #             float(b[3]),
+            #         )
+            #         for b in (detection.bbox for detection in excluded_label_detections)
+            #     ]
+            #     combined_excludes = list(analysis.image_rects) + excluded_bboxes
 
-            if (
-                analysis is not None
-                and prefer_pdf_text
-                and analysis.has_text
-                and not analysis.is_full_page_image
-            ):
-                # Merge exclusion regions: image regions from analysis + labels_to_exclude regions from detections
-                excluded_label_detections = filter_detections(
-                    detections, labels_to_include=extraction_config.labels_to_exclude
-                )
-                excluded_bboxes = [
-                    (
-                        float(b[0]),
-                        float(b[1]),
-                        float(b[2]),
-                        float(b[3]),
-                    )
-                    for b in (detection.bbox for detection in excluded_label_detections)
-                ]
-                combined_excludes = list(analysis.image_rects) + excluded_bboxes
+            #     if combined_excludes:
+            #         logger.debug(
+            #             f"Excluding {len(combined_excludes)} regions from PDF text on page {idx + 1}"
+            #         )
+            #         fast_text = extract_pdf_text_excluding_regions(
+            #             document_path, analysis.page_index, combined_excludes
+            #         )
+            #     else:
+            #         fast_text = extract_pdf_page_text(document_path, analysis.page_index)
 
-                if combined_excludes:
-                    logger.debug(
-                        f"Excluding {len(combined_excludes)} regions from PDF text on page {idx + 1}"
-                    )
-                    fast_text = extract_pdf_text_excluding_regions(
-                        document_path, analysis.page_index, combined_excludes
-                    )
-                else:
-                    fast_text = extract_pdf_page_text(document_path, analysis.page_index)
-
-                if fast_text and len(fast_text) < extraction_config.pdf_text_threshold_chars:
-                    fast_text = None
-                    logger.debug(
-                        f"Discarded short PDF text below threshold; will use OCR for page {idx + 1}"
-                    )
-                else:
-                    length = 0 if fast_text is None else len(fast_text)
-                    logger.info(f"Using PDF-native text for page {idx + 1} (length={length})")
+            #     if fast_text and len(fast_text) < extraction_config.pdf_text_threshold_chars:
+            #         fast_text = None
+            #         logger.debug(
+            #             f"Discarded short PDF text below threshold; will use OCR for page {idx + 1}"
+            #         )
+            #     else:
+            #         length = 0 if fast_text is None else len(fast_text)
+            #         logger.info(f"Using PDF-native text for page {idx + 1} (length={length})")
 
             page_result = process_single_page(
                 image=img,
+                includes=includes,
                 page_number=idx + 1,
-                detector=detector,
+                detections=detections,
                 summarizer=summarizer,
                 ocr_lang=ocr_config.lang,
                 charts_labels=ocr_config.chart_labels,
-                labels_to_exclude_from_ocr=ocr_config.labels_to_exclude,
-                pre_extracted_text=fast_text,
-                precomputed_detections=detections,
+                ocr_noise_labels=ocr_config.labels_to_exclude,
             )
 
             # Save individual page result to output directory
             with open(Path(output_dir) / f"page_{idx + 1}.json", "w") as f:
                 json.dump(page_result, f)
 
-            # Yield the page result
             yield page_result
 
-            # Explicitly free memory after processing each page
+            # Explicitly free memory after processing each page and force
+            # garbage collection at specified intervals to prevent memory buildup
             del img
-
-            # Force garbage collection at specified intervals to prevent memory buildup
             if (idx + 1) % memory_cleanup_interval == 0:
                 gc.collect()
 

@@ -39,6 +39,10 @@ DEFAULT_LABELS_TO_EXCLUDE_OCR = [
     "page_footer",
     "page_header",
     "footnote",
+    "picture",
+    "table",
+    "formula",
+    "equation",
 ]
 
 # Default LLM Configuration Constants
@@ -97,3 +101,8 @@ def get_models_path() -> Path:
 
 # Legacy constant for backward compatibility
 MODELS_PATH = get_models_path()
+
+TMP_DIR_PREFIX = "docviz"
+DEFAULT_CHART_SUMMARIZER_RETRIES = 3
+DEFAULT_CHART_SUMMARIZER_TIMEOUT = 5
+DEFAULT_MEMORY_CLEANUP_INTERVAL = 10

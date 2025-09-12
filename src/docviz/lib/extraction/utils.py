@@ -8,9 +8,10 @@ from docviz.types import DetectionResult
 
 def filter_detections(
     detections: list[DetectionResult],
-    labels_to_include: list[str] | None = None,
-    labels_to_exclude: list[str] | None = None,
-) -> list[DetectionResult]:
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    return_bboxes: bool = False,
+) -> list[DetectionResult] | list[list[float]]:
     """
     Filter detections to only include elements with specified labels.
 
@@ -21,16 +22,23 @@ def filter_detections(
     Returns:
         List[DetectionResult]: Filtered list containing only detections with specified labels.
     """
+    if exclude is None:
+        exclude = []
+    if include is None:
+        include = []
 
-    if labels_to_exclude is None:
-        labels_to_exclude = []
-    if labels_to_include is None:
-        labels_to_include = []
-    if labels_to_include:
-        detections = [det for det in detections if det.label_name.lower() in labels_to_include]
-    if labels_to_exclude:
-        detections = [det for det in detections if det.label_name.lower() not in labels_to_exclude]
-    return detections
+    result = []
+    if include:
+        result = [det for det in detections if det.label_name.lower() in include]
+    elif exclude:
+        result = [det for det in detections if det.label_name.lower() not in exclude]
+    else:
+        result = detections
+
+    if return_bboxes:
+        result = [det.bbox for det in result]
+
+    return result
 
 
 def load_rgb_image(image_path: Path) -> np.ndarray:
