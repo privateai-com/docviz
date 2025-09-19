@@ -181,6 +181,25 @@ Provider Configuration
         base_url="http://localhost:11434/v1"
     )
 
+**Custom Prompt Configuration**
+
+.. code-block:: python
+
+    custom_prompt = """
+    Analyze this chart and provide a detailed summary focusing on:
+    1. Key trends and patterns
+    2. Notable data points
+    3. Business insights
+    4. Recommendations based on the data
+    """
+
+    custom_config = docviz.LLMConfig(
+        model="gpt-4o-mini",
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url="https://api.openai.com/v1",
+        custom_prompt=custom_prompt
+    )
+
 Parameters Reference
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -189,6 +208,10 @@ Parameters Reference
 * ``model`` (str): Model name (e.g., "gpt-4o-mini", "llama2")
 * ``api_key`` (str): API key for the provider (can be empty for local models)
 * ``base_url`` (str): Base URL for API endpoints
+
+**Optional Parameters**
+
+* ``custom_prompt`` (str | None): Custom prompt for chart summarization. If None, uses the default prompt optimized for data extraction.
 
 Usage Examples
 ~~~~~~~~~~~~~~
@@ -326,6 +349,7 @@ Use configuration files for complex setups:
     llm:
       model: "gpt-4o-mini"
       base_url: "https://api.openai.com/v1"
+      custom_prompt: "Analyze this chart and provide insights focusing on trends and key data points."
 
     output:
       formats: ["json", "csv"]

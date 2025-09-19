@@ -115,6 +115,7 @@ def get_default_llm_config(
     model: str = DEFAULT_LLM_MODEL,
     api_key: str = DEFAULT_LLM_API_KEY,
     base_url: str = DEFAULT_LLM_BASE_URL,
+    custom_prompt: str | None = None,
 ) -> LLMConfig:
     """Get a cached default LLM configuration.
 
@@ -122,6 +123,7 @@ def get_default_llm_config(
         model: LLM model name
         api_key: API key for LLM
         base_url: Base URL for LLM API
+        custom_prompt: Custom prompt for chart summarization
 
     Returns:
         Cached LLMConfig instance
@@ -130,6 +132,7 @@ def get_default_llm_config(
         model=model,
         api_key=api_key,
         base_url=base_url,
+        custom_prompt=custom_prompt,
     )
 
 

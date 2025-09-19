@@ -33,6 +33,7 @@ class ChartSummarizer:
         base_url: str,
         retries: int,
         timeout: int,
+        custom_prompt: str | None = None,
     ) -> None:
         """
         Initialize the ChartSummarizer.
@@ -43,11 +44,13 @@ class ChartSummarizer:
             base_url (str): The base URL for the OpenAI API.
             retries (int): Number of times to retry the request on failure.
             timeout (int): Timeout for each request in seconds.
+            custom_prompt (str | None): Custom prompt for chart summarization. If None, uses default prompt.
         """
         logger.info(f"Initializing ChartSummarizer with model: {model_name}")
         self.model_name = model_name
         self.retries = retries
         self.timeout = timeout
+        self.custom_prompt = custom_prompt
         config = {}
         if api_key:
             config["api_key"] = api_key
@@ -128,8 +131,11 @@ class ChartSummarizer:
         logger.debug(f"Summarizing charts from image shape: {image.shape}")
 
         if prompt is None:
-            prompt = DEFAULT_VISION_PROMPT
-            logger.debug("Using default chart summarization prompt")
+            prompt = self.custom_prompt if self.custom_prompt is not None else DEFAULT_VISION_PROMPT
+            if self.custom_prompt is not None:
+                logger.debug("Using custom prompt from ChartSummarizer instance")
+            else:
+                logger.debug("Using default chart summarization prompt")
         else:
             logger.debug("Using custom prompt for summarization")
 

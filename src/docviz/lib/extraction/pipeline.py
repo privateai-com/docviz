@@ -115,6 +115,7 @@ def pipeline(
             api_key=api_key or "",
             retries=3,
             timeout=5,
+            custom_prompt=llm_config.custom_prompt,
         )
         logger.info("Models initialized successfully")
 
@@ -480,6 +481,7 @@ def pipeline_streaming(
             api_key=api_key or "",
             retries=DEFAULT_CHART_SUMMARIZER_RETRIES,
             timeout=DEFAULT_CHART_SUMMARIZER_TIMEOUT,
+            custom_prompt=llm_config.custom_prompt,
         )
         logger.info("Models initialized successfully")
 

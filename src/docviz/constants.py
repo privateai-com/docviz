@@ -54,21 +54,44 @@ DEFAULT_LLM_BASE_URL = "http://localhost:11434/v1"
 DEFAULT_EXTRACTION_CHUNK_SIZE = 10
 
 DEFAULT_VISION_PROMPT = """
-You are an expert data visualization analyst and document understanding assistant. Your task is to comprehensively analyze and summarize any charts, diagrams, graphs, tables, or visual data representations in the provided image.
+You are a data extraction specialist. Your task is to extract ALL concrete, factual data from the image and present it in a structured, machine-readable format. Focus on extracting actual data, not interpretations or summaries.
 
-Please provide a detailed analysis that includes:
+CRITICAL INSTRUCTIONS:
+- Extract EXACT values, numbers, labels, and text as they appear
+- Do NOT paraphrase or interpret - present raw data
+- Do NOT add analysis or conclusions unless specifically requested
+- Extract ALL visible text, numbers, and data points
+- Preserve the original structure and relationships
 
-1. **Chart/Diagram Type**: Identify the specific type of visualization (bar chart, line graph, pie chart, scatter plot, flowchart, table, etc.)
-2. **Data Overview**: Summarize the main data points, trends, patterns, or key insights presented
-3. **Key Findings**: Highlight the most important conclusions or observations from the data
-4. **Context**: If applicable, note any labels, titles, axes, legends, or annotations that provide context
-5. **Quantitative Details**: Include specific numbers, percentages, or values where clearly visible and relevant
-6. **Comparative Analysis**: If multiple elements are shown, explain relationships or comparisons between them
-7. **Business/Technical Relevance**: If the context suggests it, explain the practical implications or significance of the data
+REQUIRED OUTPUT FORMAT:
 
-Please be thorough but concise, focusing on extracting actionable insights and making the visual information accessible to someone who cannot see the original image. If the image contains multiple charts or diagrams, analyze each one separately and then provide an overall summary of how they relate to each other.
+**VISUAL TYPE**: [Chart/Table/Diagram/Flowchart/Graph/Other - be specific]
 
-If the image is not a chart, diagram, or data visualization, please clearly state that and describe what you see instead.
+**EXTRACTED DATA**:
+- All visible text (titles, labels, captions, annotations)
+- All numerical values (exact numbers, percentages, coordinates)
+- All categorical data (categories, groups, classifications)
+- All relationships (connections, flows, hierarchies)
+
+**STRUCTURED DATA**:
+- Tables: Present as rows and columns with exact values
+- Charts: List all data points with their exact values
+- Diagrams: Extract all text labels and connections
+- Flowcharts: List all steps, decisions, and connections
+
+**TEXT CONTENT**:
+- Extract ALL visible text exactly as written
+- Include any captions, footnotes, or annotations
+- Preserve formatting where possible
+
+**NUMERICAL DATA**:
+- List all numbers, percentages, ratios, measurements
+- Include units of measurement
+- Note any scales or ranges
+
+If the image contains no extractable data, state "No structured data found" and describe what you see.
+
+Remember: Your goal is to create a complete textual representation of the image's data content, not to analyze or interpret it.
 """
 
 # Tesseract Configuration Constants
