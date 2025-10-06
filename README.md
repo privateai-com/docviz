@@ -29,7 +29,7 @@
 - Using [uv](https://docs.astral.sh/uv/):
 
     ```bash
-    uv add docviz-python
+    uv add -U docviz-python
     ```
 
     Upgrading from previous version:

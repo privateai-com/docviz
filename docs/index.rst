@@ -7,7 +7,9 @@ Welcome to docviz-python documentation!
 
 **Extract content from documents easily with Python.**
 
-docviz-python is a powerful Python library for extracting and analyzing content from documents. It supports batch and selective extraction, custom configuration, and multiple output formats.
+`docviz-python <https://github.com/privateai-com/docviz>`_ is a robust Python library for extracting and analyzing content from documents. It offers batch and selective extraction, flexible configuration options, and supports exporting results in multiple formats.
+
+GitGub: https://github.com/privateai-com/docviz
 
 Key Features
 -----------
