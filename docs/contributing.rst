@@ -219,7 +219,7 @@ Example issue:
     
     - Python: 3.11.0
     - OS: Ubuntu 22.04
-    - docviz-python: 0.7.0
+    - docviz-python: 0.11.0
     
     ## Issue
     

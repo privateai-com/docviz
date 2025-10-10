@@ -22,8 +22,8 @@ copyright = "2025, fresh-milkshake"
 author = "fresh-milkshake"
 
 # The full version, including alpha/beta/rc tags
-release = "0.7.0"
-version = "0.7.0"
+release = "0.11.0"
+version = "0.11.0"
 
 # -- General configuration ---------------------------------------------------
 

@@ -102,6 +102,23 @@ Process large documents page by page to manage memory usage:
         
         return all_results
 
+Chunked Processing
+------------------
+
+Process documents in configurable page chunks to balance performance and memory usage:
+
+.. code-block:: python
+
+    import docviz
+
+    document = docviz.Document("large_document.pdf")
+
+    # Process in 5-page chunks
+    for chunk in document.extract_chunked(chunk_size=5):
+        print(f"Chunk {chunk.page_range}: {len(chunk.result.entries)} items")
+        # Save chunk results
+        chunk.save(f"output/chunk_{chunk.page_range}", save_format=docviz.SaveFormat.JSON)
+
 Custom Progress Tracking
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

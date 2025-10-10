@@ -1,5 +1,5 @@
 Welcome to docviz-python documentation!
-==========================================
+=======================================
 
 .. image:: https://raw.githubusercontent.com/privateai-com/docviz/refs/heads/main/assets/header_long.svg
    :alt: docviz
@@ -7,21 +7,24 @@ Welcome to docviz-python documentation!
 
 **Extract content from documents easily with Python.**
 
-`docviz-python <https://github.com/privateai-com/docviz>`_ is a robust Python library for extracting and analyzing content from documents. It offers batch and selective extraction, flexible configuration options, and supports exporting results in multiple formats.
+`docviz-python <https://github.com/privateai-com/docviz>`_ is a robust Python library for extracting and analyzing content from documents. It offers batch and selective extraction, flexible configuration options, and supports multiple output formats.
 
 GitHub: https://github.com/privateai-com/docviz
 
 Key Features
------------
+------------
 
-* **PDF Support**: Extract content from PDF documents (other formats coming soon)
-* **Streaming Extraction**: Process large documents with real-time results
-* **Batch Processing**: Handle multiple files efficiently
-* **Selective Extraction**: Choose what to extract (tables, text, figures, equations, etc.)
-* **Multiple Output Formats**: Export to JSON, CSV, Excel, XML
-* **Simple API**: Easy-to-use interface with high configurability
-* **Async Support**: Both synchronous and asynchronous processing
-* **Chart Detection**: Advanced detection and analysis of charts and figures
+- **PDF Support**: Extract content from PDF documents (other formats coming soon)
+- **URL Inputs**: Load documents from local paths or HTTP(S) URLs
+- **Streaming Extraction**: Process large documents with real-time results
+- **Batch Processing**: Handle multiple files efficiently
+- **Chunked Extraction**: Process documents in configurable page chunks
+- **Selective Extraction**: Choose what to extract (tables, text, figures, equations, etc.)
+- **Multiple Output Formats**: Export to JSON, CSV, Excel, XML
+- **CLI Included**: `docviz` command for single-file and batch processing
+- **Async Support**: Both synchronous and asynchronous processing
+- **Chart Detection & LLM Summarization (optional)**: Detect visual elements and optionally summarize charts using an LLM
+- **Automatic Dependencies**: On first import, downloads required models and helps install Tesseract on Windows
 
 Quick Start
 ----------

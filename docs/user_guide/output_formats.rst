@@ -10,7 +10,7 @@ docviz-python supports the following output formats:
 
 * **JSON**: Structured data format with full metadata
 * **CSV**: Tabular format for spreadsheet applications
-* **Excel**: Microsoft Excel format with multiple sheets
+* **Excel**: Microsoft Excel format (single sheet)
 * **XML**: Extensible markup language format
 
 Each format has different strengths and is suitable for different use cases and downstream processing needs.
@@ -170,7 +170,7 @@ Filtering CSV Content
 Excel Format
 ------------
 
-Excel format provides rich formatting options and supports multiple sheets for organized data presentation.
+Excel format provides a familiar tabular view in a single worksheet.
 
 Basic Usage
 ~~~~~~~~~~~

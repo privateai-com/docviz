@@ -121,13 +121,34 @@ Required for text extraction from images:
 
 **Windows:**
 
-Download and install from `https://github.com/UB-Mannheim/tesseract/wiki`
+DocViz can help install Tesseract for you. On first import, DocViz performs a dependency
+check and will download and launch the official Tesseract installer if it's not found.
+You can also install manually from `https://github.com/UB-Mannheim/tesseract/wiki`.
 
 **Verify installation:**
 
 .. code-block:: bash
 
     tesseract --version
+
+Automatic Dependency Management
+-------------------------------
+
+On first import, DocViz verifies dependencies and will:
+
+- Check that Tesseract OCR is available and working
+- Download required detection models if missing
+
+Models are stored under ``~/.docviz/models`` by default. You can clear cached data with:
+
+.. code-block:: python
+
+    from docviz.environment import reset_docviz_cache
+    reset_docviz_cache()
+
+.. note::
+
+    The first run may take longer due to model downloads. Subsequent runs reuse cached models.
 
 Verification
 ------------

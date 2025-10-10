@@ -208,7 +208,7 @@ Save results in different formats:
     # Save as CSV (tabular data)
     extractions.save("output", save_format=docviz.SaveFormat.CSV)
     
-    # Save as Excel (multiple sheets)
+    # Save as Excel (single sheet)
     extractions.save("output", save_format=docviz.SaveFormat.EXCEL)
     
     # Save as XML (structured markup)

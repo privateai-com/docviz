@@ -8,8 +8,9 @@ Basic Usage
 
 .. code-block:: bash
 
-    # Extract content from a single document
+    # Extract content from a single document (local path or URL)
     docviz extract document.pdf
+    docviz extract https://example.com/document.pdf
 
     # Extract with specific output format
     docviz extract document.pdf --format json --output results.json
@@ -30,11 +31,11 @@ Extract content from a single document.
 
 .. code-block:: bash
 
-    docviz extract [OPTIONS] FILE_PATH
+    docviz extract [OPTIONS] FILE_PATH_OR_URL
 
     Options:
 
-        --output, -o PATH          Output file path
+        --output, -o PATH          Output file path (include extension)
         --format, -f TEXT          Output format (json, csv, excel, xml)
         --types, -t TEXT           Content types to extract (all, table, text, figure, equation, other)
         --confidence FLOAT         Detection confidence threshold (default: 0.5)
@@ -62,14 +63,10 @@ Extract content from multiple documents in a directory.
         --verbose, -v              Enable verbose output
         --help                     Show help message
 
-Info Command
-~~~~~~~~~~~~
+.. note::
 
-Show information about DocViz and available options.
-
-.. code-block:: bash
-
-    docviz info
+    The ``extract`` command accepts either a local file path or an HTTP(S) URL. The ``batch`` command
+    accepts only a local directory.
 
 Examples
 --------

@@ -117,7 +117,28 @@ Extract only specific types of content:
             docviz.ExtractionType.TEXT,
         ]
     )
-    
+
+Includes Presets
+~~~~~~~~~~~~~~~~
+
+For convenience, you can use presets that group common extraction types:
+
+.. code-block:: python
+
+    import docviz
+
+    document = docviz.Document("sample.pdf")
+
+    # Text-focused data (text, equations, other)
+    extractions = document.extract_content_sync(
+        includes=docviz.types.IncludesPreset.TEXT_DATA
+    )
+
+    # Media-focused data (figures and tables)
+    media = document.extract_content_sync(
+        includes=docviz.types.IncludesPreset.MEDIA
+    )
+
     # Extract everything except figures
     extractions = document.extract_content_sync(
         includes=[

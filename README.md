@@ -112,7 +112,7 @@ import docviz
 document = docviz.Document("path/to/document.pdf")
 
 # Extract only specific types of content
-extractions = document.extract_content(
+extractions = document.extract_content_sync(
     includes=[
         docviz.ExtractionType.TABLE,
         docviz.ExtractionType.TEXT,
@@ -130,9 +130,9 @@ extractions.save("selective_results", save_format=docviz.SaveFormat.JSON)
 import docviz
 
 document = docviz.Document("path/to/document.pdf")
-extractions = document.extract_content(
+extractions = document.extract_content_sync(
     extraction_config=docviz.ExtractionConfig(page_limit=30),
-    llm_config=LLMConfig(
+    llm_config=docviz.LLMConfig(
         model="gpt-4o-mini",
         api_key=os.getenv("OPENAI_API_KEY"),
         base_url="https://api.openai.com/v1",
@@ -148,9 +148,8 @@ import docviz
 
 document = docviz.Document("path/to/large_document.pdf")
 
-# Process document in pages to save memory
-for page_result in document.extract_streaming():
-    # Process each page
+# Process document in pages to save memory (sync API)
+for page_result in document.extract_streaming_sync():
     page_result.save(f"page_{page_result.page_number}", save_format=docviz.SaveFormat.JSON)
 ```
 
@@ -162,16 +161,16 @@ from tqdm import tqdm
 
 document = docviz.Document("path/to/document.pdf")
 
-# Extract with progress bar
+# Extract with progress bar (sync API)
 with tqdm(total=document.page_count, desc="Extracting content") as pbar:
-    extractions = document.extract_content(progress_callback=pbar.update)
+    extractions = document.extract_content_sync(progress_callback=pbar.update)
 
 extractions.save("progress_results", save_format=docviz.SaveFormat.JSON)
 ```
 
 ## Docs
 
-Project has a static site with docs and examples on almost all of its functionality. You can find it at [GitHub Pages](https://docviz-python.readthedocs.io/) or build it on your own using `sphinx` locally. All the dependencies are included in [pyproject.toml](./pyproject.toml) under the `docs` group.
+Project has a static site with docs and examples on almost all of its functionality. You can find it on GitHub Pages at https://privateai-com.github.io/docviz/ or build it locally using Sphinx. All the documentation dependencies are listed in [pyproject.toml](./pyproject.toml) under the `docs` group.
 
 ### Examples
 
