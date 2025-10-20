@@ -88,23 +88,28 @@ Follow these simple steps to process your documents online:
 
 5. **Download Results**
    
-   Once processing is complete, you'll see a green "success" indicator next to your document along with a "Download" button to retrieve the results.
+   When processing is finished, a green "success" badge will appear beside your document. Simply click the "Download" button to retrieve your results. The extracted data is provided in JSON format, making it easy to view, analyze, or integrate into your own applications and workflows.
 
 6. **View and Explore Results**
-   
-   .. image:: /_static/result-page.png
-      :alt: Document results overview screenshot
-      :width: 80%
-      :align: center
-   
+
    Click on the document card to view detailed results organized by content type:
    
    - **Text**: Extracted textual content
    - **Tables**: Structured tabular data
    - **Images**: Detected visual elements
    - **Formulas**: Mathematical equations and expressions
-   
-   Results are available in JSON format for easy integration with your applications.
+
+   .. image:: /_static/result-page.png
+      :alt: Document results overview screenshot
+      :width: 80%
+      :align: center
+
+   Here is an example of an extracted image, which you can also view directly in the document preview on the right side:
+
+   .. image:: /_static/result-page-2.png
+      :alt: Document results page 2 screenshot
+      :width: 80%
+      :align: center
 
 Key Features
 ------------
